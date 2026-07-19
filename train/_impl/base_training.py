@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
+import os
 
 import copy
 import hashlib
@@ -711,8 +712,27 @@ def train_stage(
         )
     )
 
+    resume_ckpt_path = os.environ.get("MS2_RESUME_CKPT")
+
+    checkpoint_dir = str(
+        trainer.checkpoint_callback.dirpath
+    )
+
+    if (
+        resume_ckpt_path
+        and "stage1_v1_40ep"
+        not in checkpoint_dir
+    ):
+        resume_ckpt_path = None
+
+    if resume_ckpt_path:
+        print(
+            f"[RESUME] {resume_ckpt_path}"
+        )
+
     trainer.fit(
         model,
+        ckpt_path=resume_ckpt_path,
         train_dataloaders=train_loader,
         val_dataloaders=val_loader,
     )
