@@ -1,0 +1,32 @@
+{
+  "source": {
+    "n_spectra": 19659,
+    "n_molecules": 2274,
+    "n_scaffolds": 1284
+  },
+  "train": {
+    "n_spectra": 15727,
+    "n_molecules": 1819,
+    "n_scaffolds": 908,
+    "spectrum_fraction": 0.7999898265425505,
+    "molecule_fraction": 0.7999120492524187
+  },
+  "test": {
+    "n_spectra": 3932,
+    "n_molecules": 455,
+    "n_scaffolds": 376,
+    "spectrum_fraction": 0.2000101734574495,
+    "molecule_fraction": 0.20008795074758134
+  },
+  "validation": {
+    "n_spectra": 0,
+    "n_molecules": 0
+  },
+  "overlap": {
+    "spec_overlap": 0,
+    "molecule_overlap": 0,
+    "scaffold_overlap": 0
+  },
+  "acyclic_molecules": 913,
+  "invalid_or_missing_smiles": 0
+}

@@ -1,0 +1,57 @@
+# Python缓存
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.cache/
+
+# 编辑器和系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 实验平台缓存
+wandb/
+
+# 本地处理数据和fragment DAG
+data/proc/
+data/frag/
+
+# 模型权重和大型二进制文件
+*.ckpt
+*.pt
+*.pth
+*.pkl
+*.pickle
+*.joblib
+*.npy
+*.npz
+*.parquet
+*.arrow
+*.feather
+*.h5
+*.hdf5
+
+# 重复checkpoint目录
+runs/**/checkpoints/
+
+# 临时工作区和软链接副本
+runs/**/workspace/
+
+# 临时原始日志
+*.raw.log
+
+# 备份文件和目录
+*.bak
+*.bak_*
+*.before_*
+*bak_before*
+*bak_after*
+
+# 压缩包
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz

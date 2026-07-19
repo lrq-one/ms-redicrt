@@ -1,0 +1,4 @@
+generated_at=2026-07-14T18:43:00+08:00
+Python 3.10.12
+pip 25.3 from /home/lwh/anaconda3/envs/lrq_q/lib/python3.10/site-packages/pip (python 3.10)
+NVIDIA GeForce RTX 3090, 570.124.06, 24576 MiB

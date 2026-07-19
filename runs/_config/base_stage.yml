@@ -1,0 +1,241 @@
+wandb_name: UNIFIED_V1_renderer_gate_ce_40ep_seed42
+wandb_group: UNIFIED_40EP
+seed: 42
+spec_fp: data/proc/nist20_qtof_cid_safe19659/spec_df.pkl
+mol_fp: data/proc/nist20_qtof_cid_safe19659/mol_df.pkl
+split_dp: data/split/nist20_qtof_cid_safe19659_qcv1_trainonly
+frag_dp: data/frag/nist20_qtof_cid_safe19659_d3_mhp_qtof_cid_nl_v1/dags
+ann_fp: data/proc/nist20_qtof_cid_safe19659/ann_df.pkl
+spec_params:
+  merge: false
+  merge_keep_ces: false
+  sparse: true
+  prec_type: true
+  prec_type_str: false
+  prec_types:
+  - '[M+H]+'
+  inst_type: true
+  inst_types:
+  - QTOF
+  prec_mz: true
+  prec_mass_diff: true
+  nce: false
+  ace: true
+  preprocess: true
+  unique_id: true
+  counts: true
+  test_ces: null
+mol_params:
+  smiles: true
+  fingerprint: false
+  fingerprint_morgan: true
+  fingerprint_rdkit: true
+  fingerprint_maccs: true
+  pyg: true
+  pyg_node_feats:
+  - a_onehot
+  - a_degree
+  - a_hybrid
+  - a_formal
+  - a_radical
+  - a_ring
+  - a_mass
+  - a_chiral
+  pyg_edge_feats:
+  - b_degree
+  pyg_pe_embed_k: 0
+  pyg_bigraph: true
+  mf: false
+  graff: false
+  preprocess: true
+frag_params:
+  pyg: true
+  pyg_node_feats:
+  - cc
+  - base_formula
+  - depth
+  - h_formulae_idx
+  pyg_edge_feats: []
+  pyg_edges: true
+  pyg_bigraph: false
+  num_isotopes: 1
+  formula_peak_mzs: true
+  formula_peak_probs: true
+  formula_str: false
+  compressed: true
+  preload: true
+  preprocess: false
+  energy_nl_support: true
+  energy_nl_max_peaks: 3
+  energy_nl_weight: 0.03
+  energy_nl_ce_center: 35.0
+  energy_nl_ce_scale: 7.5
+  frontier_support: false
+model_type: frag_gnn
+frag_gnn_type: NodeMLP
+num_depth: 4
+num_hs: 4
+mol_pool_type: mean
+frag_pool_type: mean
+mol_normalization: batch
+frag_normalization: graph
+mol_hidden_size: 128
+frag_hidden_size: 128
+mlp_hidden_size: 64
+mol_num_layers: 3
+frag_num_layers: 3
+mlp_num_layers: 2
+mol_dropout: 0.2
+frag_dropout: 0.1
+mlp_dropout: 0.2
+mlp_normalization: layer
+frag_embed_combine: avg
+frag_pool_combine: subtract
+ce_insert_type: embed
+ce_insert_location: mlp
+ce_insert_merge: false
+ce_insert_size: 32
+ce_max: 80
+ce_mean: 20
+ce_std: 10
+mask_null_formula: false
+predict_oos: true
+oos_tolerance_multiple: 1
+oos_loss: true
+gaussian_renormalize: true
+sparse_cosine_similarity: true
+loss_vectorized: true
+loss_batch_size: 8
+skip_extra_losses: true
+auxiliary_scores:
+- cos_sim
+- recall
+- wrecall
+- precision
+- jss
+eval_mz_bin_res:
+- 0.01
+train_batch_size: 16
+eval_batch_size: 16
+accumulate_grad_batches: 1
+gradient_clip_val: 5.0
+lr: 0.0003
+weight_decay: 0.01
+accelerator: gpu
+devices: 1
+precision: 32
+use_tensor_float32: true
+min_epochs: 1
+max_epochs: 40
+num_workers: 4
+pin_memory: true
+compile: false
+pl_enable_progress_bar: true
+log_every_n_steps: 20
+num_sanity_val_steps: 1
+checkpoint_metric: val_cos_sim_0.01_epoch/mean
+checkpoint_metric_mode: max
+checkpoint_save_last: true
+disable_checkpoints: false
+delete_checkpoints: false
+upload_checkpoints: false
+eval_test_split: false
+use_ce_fragment_gate: true
+ce_fragment_gate_hidden_size: 128
+ce_fragment_gate_dropout: 0.1
+ce_fragment_gate_gamma_scale: 0.2
+ce_fragment_gate_use_depth: true
+use_ce_oos_head: false
+use_ce_local_transition_prior: true
+ce_local_transition_hidden_size: 256
+ce_local_transition_dropout: 0.1
+ce_local_transition_delta_scale: 0.5
+use_ce_peak_channel_allocator: false
+use_ce_path_energy: true
+ce_path_energy_hidden_size: 128
+ce_path_energy_dropout: 0.1
+ce_path_energy_delta_scale: 0.3
+ce_path_energy_max_depth: 4
+loss_tolerance_rel: null
+loss_tolerance_abs: 0.006
+loss_tolerance_min_mz: 200.0
+use_ce_hchannel_transition_prior: false
+use_ce_depth_mixture_head: true
+ce_depth_mixture_hidden_size: 128
+ce_depth_mixture_dropout: 0.1
+ce_depth_mixture_delta_scale: 0.5
+ce_depth_mixture_num_channels: 3
+use_major_peak_weighted_loss: false
+use_ce_depth_rank_loss: false
+ce_depth_rank_weight: 0.0
+ce_depth_rank_margin: 0.03
+ce_depth_rank_min_ce_diff: 5.0
+use_spectrum_candidate_refiner: true
+spectrum_refiner_train_scope: all
+spectrum_refiner_hidden_size: 128
+spectrum_refiner_num_layers: 2
+spectrum_refiner_num_heads: 4
+spectrum_refiner_dropout: 0.1
+spectrum_refiner_delta_scale: 0.05
+spectrum_refiner_topk: 384
+spectrum_refiner_center_per_spectrum: true
+spectrum_refiner_use_logit_feature: true
+spectrum_refiner_use_mz_features: true
+spectrum_refiner_use_peak_prior: true
+use_candidate_presence_rank_loss: false
+candidate_rank_loss_weight: 0.004
+candidate_rank_mz_bin_res: 0.01
+candidate_rank_topk: 384
+candidate_rank_max_pos_per_spec: 48
+candidate_rank_max_neg_per_spec: 128
+candidate_rank_margin: 0.0
+candidate_rank_match_tolerance_abs: 0.01
+candidate_rank_min_true_prob: 0.001
+candidate_rank_pos_weight_gamma: 0.5
+use_mz_offset_peak_expansion: true
+mz_offset_peak_steps:
+- -0.002
+- -0.001
+- 0.0
+- 0.001
+- 0.002
+mz_offset_peak_prior_sigma: 0.0012
+ce_peak_channel_allocator_mode: entry
+ce_peak_channel_max_channels: 5
+ce_peak_channel_delta_scale: 0.0
+use_binned_spectrum_renderer: true
+binned_spectrum_renderer_bin_res: 0.01
+binned_spectrum_renderer_max_bins: 0
+binned_spectrum_renderer_apply_train: true
+binned_spectrum_renderer_preserve_mass: true
+use_rendered_peak_drop_gate: true
+use_rendered_peak_gate_loss: false
+use_r64_true_window_dist_loss: false
+use_r58c_offset_channel_aux_loss: false
+use_ce_weighted_binned_aux_loss: true
+use_binned_false_mass_loss: false
+use_ce_bin_residual_head: false
+rendered_peak_gate_hidden_size: 128
+rendered_peak_gate_dropout: 0.1
+rendered_peak_gate_delta_scale: 0.5
+rendered_peak_gate_init_bias: 8.0
+rendered_peak_gate_max_channels: 8
+rendered_peak_gate_loss_weight: 0.002
+rendered_peak_gate_match_tol: 0.01
+rendered_peak_gate_global_shift: 0.0
+rendered_peak_gate_min_true_prob: 0.0005
+rendered_peak_gate_max_pos_per_spec: 128
+rendered_peak_gate_max_neg_per_spec: 512
+rendered_peak_gate_focal_gamma: 2.0
+rendered_peak_gate_pos_weight: 8.0
+rendered_peak_gate_use_extra_features: true
+ce_binned_aux_loss_weight: 0.003
+ce_binned_aux_mid_threshold: 20.0
+ce_binned_aux_high_threshold: 40.0
+ce_binned_aux_low_weight: 0.5
+ce_binned_aux_mid_weight: 2.0
+ce_binned_aux_high_weight: 3.0
+use_r113_rendered_peak_hard_prune: false
+use_r117_support_oracle_reweight_loss: false
+r117_support_oracle_weight: 0.0
+lr_schedule: false
