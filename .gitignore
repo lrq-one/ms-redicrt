@@ -32,7 +32,10 @@ data/frag/
 *.feather
 *.h5
 *.hdf5
-
+*.log
+*.txt
+*.csv
+*.json
 # 重复checkpoint目录
 runs/**/checkpoints/
 

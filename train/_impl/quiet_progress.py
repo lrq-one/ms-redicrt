@@ -106,14 +106,21 @@ def process(record, delimiter):
             epoch_match.group(1)
         )
 
-        if (
-            expect_new_stage
-            or last_local_epoch is None
-            or local_epoch != last_local_epoch
-        ):
+        if last_local_epoch is None:
+            # 首次看到epoch时沿用checkpoint中的真实编号。
+            global_epoch = local_epoch + 1
+            last_local_epoch = local_epoch
+            expect_new_stage = False
+
+        elif expect_new_stage or local_epoch < last_local_epoch:
+            # 新stage内部epoch重新从0开始，但前台总编号继续累加。
             global_epoch += 1
             last_local_epoch = local_epoch
             expect_new_stage = False
+
+        elif local_epoch != last_local_epoch:
+            global_epoch += local_epoch - last_local_epoch
+            last_local_epoch = local_epoch
 
         # 将每个阶段自己的 Epoch 0/1/... 改成连续的 1/2/...
         rewritten = epoch_pattern.sub(

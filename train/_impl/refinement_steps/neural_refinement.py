@@ -15,9 +15,11 @@ from train._impl.refinement_steps import (
     as energy_response,
 )
 
+from train._impl.refinement_steps import formula_composition
+
 from train._impl.refinement_steps.formula_supervision import (
     build_target_formula_hard,
-    formula_losses,
+    formula_losses as compute_formula_losses,
     get_batch_size,
     get_spec_ce,
 )
@@ -119,7 +121,7 @@ def main():
     test_dl = init_dataloader(test_ds, cfg)
 
     model = FragGNNPL(**cfg)
-    sd = energy_response.r146.load_state_dict(args.ckpt_path)
+    sd = formula_composition.load_state_dict(args.ckpt_path)
     missing, unexpected = model.load_state_dict(sd, strict=False)
 
     print("[R148] missing keys:", len(missing))
@@ -146,12 +148,12 @@ def main():
     trainable = [p for p in model.parameters() if p.requires_grad]
     opt = th.optim.AdamW(trainable, lr=args.lr, weight_decay=args.weight_decay)
 
-    baseline_val = energy_response.r146.eval_buckets(model, val_dl, device, "val")
+    baseline_val = formula_composition.eval_buckets(model, val_dl, device, "val")
     baseline_val.to_csv(out_dir / "r148_val_epoch0_before.csv", index=False)
 
     print("\n===== R148 BEFORE VAL =====")
-    print("[R148] global cos:", energy_response.r146.global_metric(baseline_val, "cos"))
-    print("[R148] global jss:", energy_response.r146.global_metric(baseline_val, "jss"))
+    print("[R148] global cos:", formula_composition.global_metric(baseline_val, "cos"))
+    print("[R148] global jss:", formula_composition.global_metric(baseline_val, "jss"))
     print(baseline_val.to_string(index=False))
 
     best_score = -1e18
@@ -181,7 +183,7 @@ def main():
             if args.max_train_batches > 0 and bi >= args.max_train_batches:
                 break
 
-            batch = energy_response.r146.move_to_device(batch, device)
+            batch = formula_composition.move_to_device(batch, device)
             bs = get_batch_size(batch)
             ce_np = get_spec_ce(batch, bs)
 
@@ -216,7 +218,7 @@ def main():
                 }
                 target_events = 0.0
             else:
-                f_loss, stat = formula_losses(
+                f_loss, stat = compute_formula_losses(
                     raw=raw,
                     target_formula=target_pack["target_formula"],
                     ce_np=ce_np,
@@ -273,13 +275,13 @@ def main():
         logs.append(row)
         print("[R148 train]", row)
 
-        val_sum = energy_response.r146.eval_buckets(model, val_dl, device, "val")
+        val_sum = formula_composition.eval_buckets(model, val_dl, device, "val")
         val_sum.to_csv(out_dir / f"r148_val_epoch{epoch}.csv", index=False)
 
-        score = energy_response.r146.score_val(val_sum, baseline_val)
+        score = formula_composition.score_val(val_sum, baseline_val)
         print(f"[R148] epoch={epoch} score={score:.6f}")
-        print("[R148] global cos:", energy_response.r146.global_metric(val_sum, "cos"))
-        print("[R148] global jss:", energy_response.r146.global_metric(val_sum, "jss"))
+        print("[R148] global cos:", formula_composition.global_metric(val_sum, "cos"))
+        print("[R148] global jss:", formula_composition.global_metric(val_sum, "jss"))
         print(val_sum.to_string(index=False))
 
         if score > best_score:
@@ -302,21 +304,21 @@ def main():
         model.load_state_dict(ckpt["state_dict"], strict=True)
         print("[R148] loaded best epoch:", ckpt["epoch"], "score:", ckpt["best_score"])
 
-    best_val = energy_response.r146.eval_buckets(model, val_dl, device, "val")
+    best_val = formula_composition.eval_buckets(model, val_dl, device, "val")
     best_val.to_csv(out_dir / "r148_best_val.csv", index=False)
 
     print("\n===== R148 BEST VAL =====")
-    print("[R148] best global cos:", energy_response.r146.global_metric(best_val, "cos"))
-    print("[R148] best global jss:", energy_response.r146.global_metric(best_val, "jss"))
+    print("[R148] best global cos:", formula_composition.global_metric(best_val, "cos"))
+    print("[R148] best global jss:", formula_composition.global_metric(best_val, "jss"))
     print(best_val.to_string(index=False))
 
     if args.eval_test:
-        best_test = energy_response.r146.eval_buckets(model, test_dl, device, "test")
+        best_test = formula_composition.eval_buckets(model, test_dl, device, "test")
         best_test.to_csv(out_dir / "r148_best_test.csv", index=False)
 
         print("\n===== R148 BEST TEST =====")
-        print("[R148] best global cos:", energy_response.r146.global_metric(best_test, "cos"))
-        print("[R148] best global jss:", energy_response.r146.global_metric(best_test, "jss"))
+        print("[R148] best global cos:", formula_composition.global_metric(best_test, "cos"))
+        print("[R148] best global jss:", formula_composition.global_metric(best_test, "jss"))
         print(best_test.to_string(index=False))
 
     print("\nwrote", out_dir)

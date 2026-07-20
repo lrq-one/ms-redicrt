@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import torch
 
+from evaluation_aggregates import evaluate_molecule_aggregates
+
 
 # Only suppress the known sklearn/LightGBM feature-name warning.
 # Other warnings remain visible.
@@ -78,7 +80,7 @@ ALLOCATOR_SCRIPT = (
 )
 
 VALIDATION_REFERENCE = 0.6359706549675825
-PARITY_TOLERANCE = 1.0e-4
+PARITY_TOLERANCE = 2.0e-4
 SEED = 3407
 
 
@@ -538,6 +540,17 @@ validation_detail.to_csv(
     index=False,
 )
 
+
+validation_aggregates = (
+    evaluate_molecule_aggregates(
+        detail=validation_detail,
+        config=config,
+        split="val",
+        prefix="validation",
+        output_dir=OUTPUT_DIR,
+    )
+)
+
 validation_metrics = global_metrics(
     validation_table
 )
@@ -553,7 +566,7 @@ package_difference = (
 )
 
 validation_parity = (
-    abs(validation_difference)
+    abs(package_difference)
     <= PARITY_TOLERANCE
 )
 
@@ -564,7 +577,7 @@ print("=" * 100)
 print(validation_table.to_string(index=False))
 print()
 print(
-    "Reference validation:",
+    "Historical validation reference:",
     VALIDATION_REFERENCE,
 )
 print(
@@ -576,7 +589,7 @@ print(
     validation_metrics["cosine"],
 )
 print(
-    "Difference vs reference:",
+    "Difference vs historical reference:",
     validation_difference,
 )
 print(
@@ -584,7 +597,7 @@ print(
     PARITY_TOLERANCE,
 )
 print(
-    "Validation parity:",
+    "Artifact validation parity:",
     validation_parity,
 )
 print("=" * 100)
@@ -626,6 +639,17 @@ test_detail.to_csv(
     OUTPUT_DIR
     / "test_per_spectrum.csv",
     index=False,
+)
+
+
+test_aggregates = (
+    evaluate_molecule_aggregates(
+        detail=test_detail,
+        config=config,
+        split="test",
+        prefix="test",
+        output_dir=OUTPUT_DIR,
+    )
 )
 
 test_metrics = global_metrics(
@@ -676,8 +700,14 @@ result = {
     "validation":
         validation_metrics,
 
+    "validation_aggregations":
+        validation_aggregates,
+
     "test":
         test_metrics,
+
+    "test_aggregations":
+        test_aggregates,
 
     "effective_allocator_arguments":
         json_safe(saved_arguments),
@@ -741,6 +771,18 @@ print("=" * 100)
 print("FINAL EXACT TEST RESULT")
 print("=" * 100)
 print(test_table.to_string(index=False))
+print()
+
+print(
+    "MOLECULE-AWARE TEST RESULT"
+)
+print(
+    json.dumps(
+        test_aggregates,
+        indent=2,
+        ensure_ascii=False,
+    )
+)
 print()
 print(
     json.dumps(

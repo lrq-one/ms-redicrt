@@ -484,6 +484,16 @@ def main():
     ap.add_argument("--max_train_batches", type=int, default=0)
     ap.add_argument("--eval_test", action="store_true")
 
+    ap.add_argument(
+        "--resume_allocator_path",
+        default=None,
+    )
+    ap.add_argument(
+        "--start_epoch",
+        type=int,
+        default=1,
+    )
+
     args = ap.parse_args()
 
     np.random.seed(int(args.seed))
@@ -574,15 +584,81 @@ def main():
         score_clip=float(args.score_clip),
     ).to(device)
 
+    resume_pack = None
+
+    if args.resume_allocator_path:
+        resume_path = Path(
+            args.resume_allocator_path
+        )
+
+        if not resume_path.is_file():
+            raise FileNotFoundError(
+                resume_path
+            )
+
+        resume_pack = th.load(
+            resume_path,
+            map_location=device,
+            weights_only=False,
+        )
+
+        saved_input_dim = int(
+            resume_pack.get(
+                "input_dim",
+                input_dim,
+            )
+        )
+
+        if saved_input_dim != input_dim:
+            raise RuntimeError(
+                f"resume input_dim不一致："
+                f"{saved_input_dim} != {input_dim}"
+            )
+
+        allocator.load_state_dict(
+            resume_pack["model"],
+            strict=True,
+        )
+
+        print(
+            "[R184 RESUME]",
+            resume_path,
+        )
+        print(
+            "[R184 RESUME] previous best val cosine:",
+            resume_pack.get(
+                "best_val_cos",
+                "unknown",
+            ),
+        )
+        print(
+            "[R184 RESUME] start epoch:",
+            args.start_epoch,
+        )
+
     opt = th.optim.AdamW(
         allocator.parameters(),
         lr=float(args.lr),
         weight_decay=float(args.weight_decay),
     )
 
-    train_rows = []
+    train_log_path = (
+        out_dir
+        / "r184_train_log.csv"
+    )
 
-    # Initial evaluation: should match R172E alpha result.
+    if (
+        int(args.start_epoch) > 1
+        and train_log_path.is_file()
+    ):
+        train_rows = (
+            pd.read_csv(train_log_path)
+            .to_dict("records")
+        )
+    else:
+        train_rows = []
+
+    # Evaluate current allocator before continuing.
     before_val, before_val_detail = eval_split(
         base,
         allocator,
@@ -594,24 +670,111 @@ def main():
         args,
         split="val",
     )
-    before_val.to_csv(out_dir / "r184_val_epoch0_before.csv", index=False)
 
-    print("\n===== R184 BEFORE VAL =====")
-    print(before_val.to_string(index=False))
-
-    best_val_cos = float(before_val[before_val["ce_bucket"] == "global"].iloc[0]["cos"])
-    save_pack(
-        out_dir / "r184_allocator_best.pt",
-        allocator,
-        input_dim,
-        extra_schema,
-        args,
-        best_val_cos,
+    current_val_cos = float(
+        before_val[
+            before_val["ce_bucket"]
+            == "global"
+        ].iloc[0]["cos"]
     )
-    before_val.to_csv(out_dir / "r184_best_val.csv", index=False)
-    print("[R184] saved initial best:", best_val_cos)
 
-    for epoch in range(1, int(args.epochs) + 1):
+    if resume_pack is None:
+        before_val.to_csv(
+            out_dir
+            / "r184_val_epoch0_before.csv",
+            index=False,
+        )
+
+        print(
+            "\n===== R184 BEFORE VAL ====="
+        )
+        print(
+            before_val.to_string(
+                index=False
+            )
+        )
+
+        best_val_cos = current_val_cos
+
+        save_pack(
+            out_dir
+            / "r184_allocator_best.pt",
+            allocator,
+            input_dim,
+            extra_schema,
+            args,
+            best_val_cos,
+        )
+
+        before_val.to_csv(
+            out_dir
+            / "r184_best_val.csv",
+            index=False,
+        )
+
+        print(
+            "[R184] saved initial best:",
+            best_val_cos,
+        )
+
+    else:
+        before_val.to_csv(
+            out_dir
+            / (
+                "r184_resume_before_epoch"
+                f"{int(args.start_epoch)}.csv"
+            ),
+            index=False,
+        )
+
+        print(
+            "\n===== R184 RESUME BEFORE VAL ====="
+        )
+        print(
+            before_val.to_string(
+                index=False
+            )
+        )
+
+        best_val_cos = float(
+            resume_pack.get(
+                "best_val_cos",
+                current_val_cos,
+            )
+        )
+
+        if current_val_cos > best_val_cos:
+            best_val_cos = current_val_cos
+
+            save_pack(
+                out_dir
+                / "r184_allocator_best.pt",
+                allocator,
+                input_dim,
+                extra_schema,
+                args,
+                best_val_cos,
+            )
+
+            before_val.to_csv(
+                out_dir
+                / "r184_best_val.csv",
+                index=False,
+            )
+
+        print(
+            "[R184 RESUME] current val cosine:",
+            current_val_cos,
+        )
+        print(
+            "[R184 RESUME] retained best:",
+            best_val_cos,
+        )
+
+    for epoch in range(
+        int(args.start_epoch),
+        int(args.epochs) + 1,
+    ):
         tr = train_one_epoch(
             base,
             allocator,
