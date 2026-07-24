@@ -17,7 +17,7 @@ wandb/
 # 本地处理数据和fragment DAG
 data/proc/
 data/frag/
-
+runs/transfer
 # 模型权重和大型二进制文件
 *.ckpt
 *.pt
@@ -41,6 +41,9 @@ data/frag/
 *.bz2
 *.txt
 *.log
+*.svg
+*.pid
+
 # 重复checkpoint目录
 runs/**/checkpoints/
 

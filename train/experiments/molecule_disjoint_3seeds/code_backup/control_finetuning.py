@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import copy
 import gc
 import hashlib
@@ -24,13 +22,6 @@ except ModuleNotFoundError:
 
 
 ROOT = Path(__file__).resolve().parents[2]
-
-GLOBAL_SEED = int(
-    os.environ.get(
-        "MS2_GLOBAL_SEED",
-        "42",
-    )
-)
 
 sys.path.insert(0, str(ROOT / "code/src"))
 sys.path.insert(0, str(ROOT / "code"))
@@ -105,10 +96,6 @@ def load_full_config(path: Path) -> dict[str, Any]:
             f"配置顶层不是字典：{path}"
         )
 
-    config[
-        "eval_test_split"
-    ] = False
-
     return config
 
 
@@ -157,7 +144,7 @@ def build_config(
     config.update(
         {
             "seed":
-                GLOBAL_SEED,
+                42,
 
             "min_epochs":
                 1,
@@ -230,20 +217,6 @@ def build_config(
     config.update(
         VARIANTS[variant]
     )
-
-    split_override = os.environ.get(
-        "MS2_SPLIT_DP"
-    )
-
-    if split_override:
-        config["split_dp"] = (
-            split_override
-        )
-
-        print(
-            "[SPLIT OVERRIDE]",
-            split_override,
-        )
 
     # 必须保持V2A结构，不能混入连续CE。
     assert (
@@ -319,7 +292,7 @@ def train_variant(
     print("=" * 96)
 
     pl.seed_everything(
-        int(config["seed"]),
+        42,
         workers=True,
     )
 

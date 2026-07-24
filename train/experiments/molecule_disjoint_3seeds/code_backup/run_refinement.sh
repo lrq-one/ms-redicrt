@@ -129,19 +129,6 @@ fi
 # shellcheck disable=SC1090
 source "$OUT/mainline_hparams.env"
 
-
-if [ -n "${MS2_GLOBAL_SEED:-}" ]; then
-    R172_SEED="$MS2_GLOBAL_SEED"
-fi
-
-cat > "$OUT/effective_seed.env" <<EOF
-MS2_GLOBAL_SEED=${MS2_GLOBAL_SEED:-}
-R172_SEED=$R172_SEED
-EOF
-
-echo "Effective pipeline seed: ${MS2_GLOBAL_SEED:-unset}"
-echo "Effective R172/R184 seed: $R172_SEED"
-
 run_stage() {
     LABEL="$1"
     shift
@@ -759,7 +746,7 @@ echo "R160 validation cosine: $R160_COS"
 
 R172_PKL="$OUT/09_R172D/r170_regressor.pkl"
 
-if [ ! -f "$R172_PKL" ] || [ ! -s "$OUT/09_R172D/r170_alpha_val.csv" ]; then
+if [ ! -f "$R172_PKL" ]; then
     run_stage \
         "09_R172D" \
         python -u \
@@ -809,115 +796,10 @@ else
 fi
 
 BEST_ALPHA="$(
-    python - "$OUT/09_R172D/r170_alpha_val.csv" <<'PY_ALPHA'
-import math
-import sys
-
-import pandas as pd
-
-
-path = sys.argv[1]
-frame = pd.read_csv(path)
-
-required = {
-    "alpha",
-    "val_cos",
-}
-
-missing = required - set(frame.columns)
-
-if missing:
-    raise RuntimeError(
-        "alpha表缺少字段："
-        + repr(sorted(missing))
-    )
-
-frame["alpha"] = pd.to_numeric(
-    frame["alpha"],
-    errors="coerce",
-)
-
-frame["val_cos"] = pd.to_numeric(
-    frame["val_cos"],
-    errors="coerce",
-)
-
-if "val_jss" in frame.columns:
-    frame["val_jss"] = pd.to_numeric(
-        frame["val_jss"],
-        errors="coerce",
-    )
-else:
-    frame["val_jss"] = 0.0
-
-frame = frame[
-    frame["alpha"].notna()
-    & frame["val_cos"].notna()
-].copy()
-
-frame = frame[
-    frame["alpha"].map(math.isfinite)
-    & frame["val_cos"].map(math.isfinite)
-]
-
-if frame.empty:
-    raise RuntimeError(
-        "alpha表没有有效结果"
-    )
-
-best = (
-    frame
-    .sort_values(
-        [
-            "val_cos",
-            "val_jss",
-            "alpha",
-        ],
-        ascending=[
-            False,
-            False,
-            True,
-        ],
-    )
-    .iloc[0]
-)
-
-print(
-    f"{float(best['alpha']):.12g}"
-)
-PY_ALPHA
+    python "$ROOT/train/_impl/stage_metrics.py" \
+        alpha \
+        "$OUT/09_R172D/r170_alpha_val.csv"
 )"
-
-ALPHA_CODE=$?
-
-if [ "$ALPHA_CODE" -ne 0 ] || [ -z "$BEST_ALPHA" ]; then
-    echo "无法提取R172最佳alpha。"
-    exit 1
-fi
-
-printf '%s\n' "$BEST_ALPHA" \
-    > "$OUT/09_R172D/best_alpha.txt"
-
-if [ ! -s "$OUT/09_R172D/r170_alpha_val.csv" ]; then
-    echo "[STOP] R172D缺少r170_alpha_val.csv"
-    exit 1
-fi
-
-if ! python -c '
-import math
-import sys
-
-value = float(sys.argv[1])
-
-if not math.isfinite(value):
-    raise ValueError(value)
-' "$BEST_ALPHA"
-then
-    echo "[STOP] R172D最佳alpha无效：'$BEST_ALPHA'"
-    exit 1
-fi
-
-echo "R172 validated alpha      : $BEST_ALPHA"
 
 R172_COS="$(
     metric \

@@ -105,10 +105,6 @@ def load_full_config(path: Path) -> dict[str, Any]:
             f"配置顶层不是字典：{path}"
         )
 
-    config[
-        "eval_test_split"
-    ] = False
-
     return config
 
 
@@ -230,20 +226,6 @@ def build_config(
     config.update(
         VARIANTS[variant]
     )
-
-    split_override = os.environ.get(
-        "MS2_SPLIT_DP"
-    )
-
-    if split_override:
-        config["split_dp"] = (
-            split_override
-        )
-
-        print(
-            "[SPLIT OVERRIDE]",
-            split_override,
-        )
 
     # 必须保持V2A结构，不能混入连续CE。
     assert (

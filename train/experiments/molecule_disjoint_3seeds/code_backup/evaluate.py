@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
-import os
 import pickle
 import random
 import warnings
@@ -82,12 +81,9 @@ ALLOCATOR_SCRIPT = (
 
 VALIDATION_REFERENCE = 0.6359706549675825
 PARITY_TOLERANCE = 2.0e-4
-SEED = int(
-    os.environ.get(
-        "MS2_GLOBAL_SEED",
-        "3407",
-    )
-)
+SEED = 3407
+
+
 def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)

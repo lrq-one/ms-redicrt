@@ -295,19 +295,6 @@ def build_stage_configs() -> tuple[
         }
     )
 
-    split_override = os.environ.get(
-        "MS2_SPLIT_DP"
-    )
-
-    if split_override:
-        stage1["split_dp"] = split_override
-        stage2["split_dp"] = split_override
-
-        print(
-            "[SPLIT OVERRIDE]",
-            split_override,
-        )
-
     # ==========================================================
     # 防止上次失败V2的设置混入。
     # ==========================================================
@@ -480,14 +467,6 @@ def build_stage_configs() -> tuple[
     )
 
     print("=" * 96)
-
-    stage1[
-        "eval_test_split"
-    ] = False
-
-    stage2[
-        "eval_test_split"
-    ] = False
 
     return stage1, stage2
 

@@ -23,13 +23,6 @@ except ModuleNotFoundError:
 
 ROOT = Path(__file__).resolve().parents[2]
 
-GLOBAL_SEED = int(
-    os.environ.get(
-        "MS2_GLOBAL_SEED",
-        "42",
-    )
-)
-
 sys.path.insert(
     0,
     str(ROOT / "code/src"),
@@ -183,7 +176,7 @@ def build_stage_configs() -> tuple[
     stage1.update(
         {
             "seed":
-                GLOBAL_SEED,
+                42,
 
             "min_epochs":
                 1,
@@ -264,7 +257,7 @@ def build_stage_configs() -> tuple[
     stage2.update(
         {
             "seed":
-                GLOBAL_SEED,
+                42,
 
             "eval_test_split":
                 False,
@@ -294,19 +287,6 @@ def build_stage_configs() -> tuple[
                 "V2A_GINE_CUTCHEM_ONLY",
         }
     )
-
-    split_override = os.environ.get(
-        "MS2_SPLIT_DP"
-    )
-
-    if split_override:
-        stage1["split_dp"] = split_override
-        stage2["split_dp"] = split_override
-
-        print(
-            "[SPLIT OVERRIDE]",
-            split_override,
-        )
 
     # ==========================================================
     # 防止上次失败V2的设置混入。
@@ -481,14 +461,6 @@ def build_stage_configs() -> tuple[
 
     print("=" * 96)
 
-    stage1[
-        "eval_test_split"
-    ] = False
-
-    stage2[
-        "eval_test_split"
-    ] = False
-
     return stage1, stage2
 
 
@@ -496,7 +468,7 @@ def architecture_preflight(
     config: dict[str, Any],
 ) -> None:
     pl.seed_everything(
-        int(config["seed"]),
+        42,
         workers=True,
     )
 
@@ -657,7 +629,7 @@ def train_stage(
     print("=" * 96)
 
     pl.seed_everything(
-        int(config["seed"]),
+        42,
         workers=True,
     )
 
