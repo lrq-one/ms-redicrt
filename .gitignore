@@ -36,6 +36,11 @@ data/frag/
 *.txt
 *.csv
 *.json
+*.png
+*.gz
+*.bz2
+*.txt
+*.log
 # 重复checkpoint目录
 runs/**/checkpoints/
 
